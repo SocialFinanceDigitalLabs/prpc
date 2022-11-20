@@ -4,6 +4,7 @@
 import { PyodideInterface } from 'pyodide';
 import { PyodideWorkerAction } from '../enums/WorkerActions';
 import { LoadStatus } from '../enums/LoadStatus';
+import { APIConfig, APIPayload } from "../api";
 
 //importScripts is a global. Only run it if it is available (ignore if the module is loaded onto window)
 // @ts-ignore: importScripts on global causes choke in def file
@@ -13,31 +14,45 @@ if (typeof importScripts === 'function') {
 }
 
 let pyodideInst: PyodideInterface;
+let apiApp: any;
 
-const initializePyodide = async () => {
+const initializePyodide = async (config: APIConfig) => {
+  self.postMessage(LoadStatus.LOADING);
   pyodideInst = await self.loadPyodide();
+
+  self.postMessage(LoadStatus.LOADED);
+  const options = config.options || {};
+  console.log('Loading options', options);
+  await pyodideInst.loadPackage('micropip');
+  const micropip = pyodideInst.pyimport('micropip');
+  if (options.packages) {
+    const installs = options.packages.map((pgk: string) =>
+      micropip.install(pgk)
+    );
+    await Promise.all(installs);
+  }
+
+  apiApp = pyodideInst
+    .pyimport(`rpc_wrap.pyodide`)
+    .PyodideSession(options.appName);
+
   self.postMessage(LoadStatus.READY);
 };
 
-const runPyodideCode = async (payload: any, config: any) => {
-  await pyodideInst.loadPackage(config.wheelPath);
-  await pyodideInst.runPythonAsync(`from main import ${config.endPoint}`);
-
-  const val = await pyodideInst.runPythonAsync(
-    `${config.endPoint}(${JSON.stringify(payload)})`
-  );
-
-  self.postMessage(val.get('val'));
+const runPyodideCode = async (payload: APIPayload) => {
+  const payloadJSON = JSON.stringify(payload);
+  const response = await apiApp.rpc(payloadJSON);
+  self.postMessage(JSON.parse(response));
 };
 
 onmessage = async (evt: any) => {
   if (evt.data.action === PyodideWorkerAction.INIT) {
-    initializePyodide();
+    initializePyodide(evt.data.body);
   }
 
   if (evt.data.action === PyodideWorkerAction.RUN) {
-    const { payload, config } = evt.data.body;
-    runPyodideCode(payload, config);
+    const { payload } = evt.data.body;
+    runPyodideCode(payload);
   }
 };
 

@@ -13,14 +13,12 @@ let responseHandler: Response;
 export const api: API = {
   handler: async (
     payload: APIPayload,
-    onResponse: Response,
-    config?: any
+    onResponse: Response
   ): Promise<string> => {
     const message: PyodideWorkerDTO = {
       action: PyodideWorkerAction.RUN,
       body: {
         payload,
-        config: config || {},
       },
     };
 
@@ -31,7 +29,7 @@ export const api: API = {
     return 'running code...';
   },
 
-  init: async (onResponse: Response) => {
+  init: async (apiConfig, onResponse: Response) => {
     worker = new Worker(
       new URL('../workers/pyodide.worker.ts', import.meta.url)
     );
@@ -44,6 +42,7 @@ export const api: API = {
 
     const message: PyodideWorkerDTO = {
       action: PyodideWorkerAction.INIT,
+      body: apiConfig,
     };
 
     worker.postMessage(message);

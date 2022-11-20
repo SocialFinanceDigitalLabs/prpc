@@ -1,4 +1,4 @@
-import {API} from './'
+import { API, Response } from "./";
 import { LoadStatus } from '../enums/LoadStatus'
 
 export const api:API = {
