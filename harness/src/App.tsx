@@ -1,22 +1,15 @@
-import React, {useState, ChangeEvent} from "react";
-import {APITransport, APIConfig, LoadStatus} from "@sfdl/prpc";
+import React, {useState, ChangeEvent, useCallback} from "react";
+import {APITransport} from "@sfdl/prpc";
 import PyodideTransportConfig from "./components/transports/PyodideTransportConfig";
 import RpcContainer from "./RpcContainer";
 import WebTransportConfig from "./components/transports/WebTransportConfig";
+import JavascriptTransportConfig from "./components/transports/StaticTransportConfig";
 
 
 export interface TransportPropsHandler {
     onChange: (options: any) => void;
+    disabled: boolean;
 }
-
-interface AppProps {
-    apiTransport: APITransport;
-    apiConfig: APIConfig;
-}
-
-type DataResponse = {
-    data: LoadStatus | unknown;
-};
 
 function App() {
     const [transport, setTransport] = useState(APITransport.PYODIDE);
@@ -29,6 +22,10 @@ function App() {
         setConfig(undefined);
     }
 
+    const updateConfig = useCallback((cfg: any) => {
+        setConfig(cfg)
+    }, [setConfig])
+
     console.log(config, transport, isRunning)
     return (
         <>
@@ -40,11 +37,14 @@ function App() {
                     )}
                 </select>
             </div>
-            {transport == APITransport.PYODIDE &&
-            <PyodideTransportConfig onChange={cfg => setConfig(cfg)}/>
+            {transport === APITransport.PYODIDE &&
+            <PyodideTransportConfig onChange={updateConfig} disabled={isRunning}/>
             }
-            {transport == APITransport.WEB &&
-            <WebTransportConfig onChange={cfg => setConfig(cfg)}/>
+            {transport === APITransport.WEB &&
+            <WebTransportConfig onChange={updateConfig} disabled={isRunning}/>
+            }
+            {transport === APITransport.STATIC &&
+            <JavascriptTransportConfig onChange={updateConfig} disabled={isRunning}/>
             }
             {config && <button onClick={() => {
                 setRunning(true);

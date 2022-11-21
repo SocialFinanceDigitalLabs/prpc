@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { APIControl, APITransport, APIConfig, LoadStatus } from "@sfdl/prpc";
+import { APIControl, APITransport, LoadStatus } from "@sfdl/prpc";
 
 
-interface RpcContainer {
+interface RpcContainerProps {
   transport: APITransport;
   options: any;
 }
@@ -11,25 +11,25 @@ type DataResponse = {
   data: LoadStatus | unknown;
 };
 
-let api: null | APIControl = null;
-
-function RpcContainer(props: RpcContainer) {
+function RpcContainer(props: RpcContainerProps) {
   const { transport, options } = props;
   const [loadStatus, setLoadStatus] = useState("Starting");
   const [method, setMethod] = useState("sum");
   const [data, setData] = useState(`{"a": 1, "b": 2}`);
   const [result, setResult] = useState("")
+  const [api, setApi] = useState(null as APIControl | null)
 
   useEffect(() => {
     const init = async () => {
-      api = new APIControl();
-      await api.loadTransport({transport, options}, handleAPIResponse);
+      const apiControl = new APIControl();
+      await apiControl.loadTransport({transport, options}, handleAPIResponse);
+      setApi(apiControl)
     };
 
     if (!api) {
       init();
     }
-  }, [transport, options]);
+  }, [api, transport, options]);
 
   const handleClick = () => {
     api &&
@@ -39,16 +39,15 @@ function RpcContainer(props: RpcContainer) {
           value: JSON.parse(data),
         },
         (response) => {
-            console.log("RECEIVED API RESPONSE", response.data);
+            console.log("RECEIVED API RESPONSE", response);
             setResult(JSON.stringify(response.data));
         }
       );
   };
 
-  const handleAPIResponse = (data: DataResponse) => {
-    console.log("RECEIVED API RESPONSE", data);
-    setLoadStatus(data.data as string);
-
+  const handleAPIResponse = (response: DataResponse) => {
+    console.log("RECEIVED API RESPONSE", response);
+    setLoadStatus(response.data as string);
   };
 
   const ready = (loadStatus === LoadStatus.READY);
