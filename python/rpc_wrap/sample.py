@@ -1,4 +1,5 @@
 import os
+import hashlib
 from typing import Iterable
 
 from rpc_wrap import RpcApp
@@ -32,3 +33,24 @@ def listfiles(path: str = ".") -> Iterable[str]:
 
     return filesystem
 
+
+@app.call
+def checksum(algorithm: str = "sha256", single_file=None, multi_file=None):
+    files = []
+    if single_file:
+        files.append(single_file)
+    if multi_file:
+        files.extend(multi_file)
+
+    if not files:
+        return "No files provided"
+
+    if algorithm not in hashlib.algorithms_available:
+        return f"Algorithm {algorithm} not available"
+
+    return_value = {}
+    for file in files:
+        hasher = hashlib.new(algorithm)
+        hasher.update(file.read())
+        return_value[file.filename] = hasher.hexdigest()
+    return return_value

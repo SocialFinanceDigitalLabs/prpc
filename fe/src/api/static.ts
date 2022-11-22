@@ -1,19 +1,14 @@
 import { API, APIPayload, Response } from './';
 import { LoadStatus } from '../enums/LoadStatus';
 
-let api_impl: { handler: (payload: APIPayload, onResponse: Response) => void };
+let api_impl: { handler: (payload: APIPayload) => Promise<any> };
 
 export const api: API = {
-  handler: async (
-    payload: APIPayload,
-    onResponse: Response
-  ): Promise<string> => {
-    api_impl.handler(payload, onResponse);
-    return 'called the JS API';
+  handler: (payload: APIPayload): Promise<any> => {
+    return api_impl.handler(payload);
   },
   init: async (apiConfig, onResponse) => {
     api_impl = apiConfig.options.jsModule;
-    onResponse({ data: LoadStatus.READY });
-    return LoadStatus.READY;
+    onResponse(LoadStatus.READY);
   },
 };

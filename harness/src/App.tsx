@@ -1,7 +1,7 @@
 import React, {useState, ChangeEvent, useCallback} from "react";
 import {APITransport} from "@sfdl/prpc";
 import PyodideTransportConfig from "./components/transports/PyodideTransportConfig";
-import RpcContainer from "./RpcContainer";
+import RpcContainer from "./components/RpcContainer";
 import WebTransportConfig from "./components/transports/WebTransportConfig";
 import JavascriptTransportConfig from "./components/transports/StaticTransportConfig";
 

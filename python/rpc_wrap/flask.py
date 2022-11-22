@@ -8,28 +8,26 @@ flaskapp = Flask(__name__)
 CORS(flaskapp)
 
 
-def _get_app():
-    app_header = request.headers.get('RPC-App')
+@flaskapp.route('/', methods=['POST'])
+def rpc():
+    print("RPC", request.data, request.form, dict(request.files.items()))
 
-    if app_header:
-        return RpcApp.find(app_header)
+    if request.form.get("RPC-App"):
+        app = RpcApp.find(request.form['RPC-App'])
     else:
-        return RpcApp.first()
+        app = RpcApp.first()
 
+    def decode(value):
+        if value.get("__type__") == "file":
+            return request.files[value["cid"]]
+        return value
 
-@flaskapp.route('/<command>', methods=['POST'])
-def rpc(command):
-    try:
-        app = _get_app()
-    except (RuntimeError, ImportError) as e:
-        abort(404, "RPC Application not found")
-
-    if request.data:
-        data = json.loads(request.data)
+    if request.form.get("value"):
+        data = json.loads(request.form['value'], object_hook=decode)
     else:
         data = None
-    result = app.run(command, data)
+
+    result = app.run(request.form['method'], data)
 
     response = jsonify(result)
-    response.headers.add("Access-Control-Allow-Origin", "*")
     return response

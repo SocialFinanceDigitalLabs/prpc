@@ -4,7 +4,9 @@
 import { PyodideInterface } from 'pyodide';
 import { PyodideWorkerAction } from '../enums/WorkerActions';
 import { LoadStatus } from '../enums/LoadStatus';
-import { APIConfig, APIPayload } from "../api";
+import { APIConfig, APIPayload } from '../api';
+import { AttachedFileSerializer } from '../util/dataTransfer';
+import { PyodideWorkerDTO } from '../api/pyodide';
 
 //importScripts is a global. Only run it if it is available (ignore if the module is loaded onto window)
 // @ts-ignore: importScripts on global causes choke in def file
@@ -16,13 +18,12 @@ if (typeof importScripts === 'function') {
 let pyodideInst: PyodideInterface;
 let apiApp: any;
 
-const initializePyodide = async (config: APIConfig) => {
-  self.postMessage(LoadStatus.LOADING);
+const initializePyodide = async (id: string, config: APIConfig) => {
+  self.postMessage({ id, body: LoadStatus.LOADING});
   pyodideInst = await self.loadPyodide();
 
-  self.postMessage(LoadStatus.LOADED);
+  self.postMessage({ id, body: LoadStatus.LOADED});
   const options = config.options || {};
-  console.log('Loading options', options);
   await pyodideInst.loadPackage('micropip');
   const micropip = pyodideInst.pyimport('micropip');
   if (options.packages) {
@@ -36,23 +37,28 @@ const initializePyodide = async (config: APIConfig) => {
     .pyimport(`rpc_wrap.pyodide`)
     .PyodideSession(options.appName);
 
-  self.postMessage(LoadStatus.READY);
+  self.postMessage({ id, body: LoadStatus.READY });
 };
 
-const runPyodideCode = async (payload: APIPayload) => {
-  const payloadJSON = JSON.stringify(payload);
-  const response = await apiApp.rpc(payloadJSON);
-  self.postMessage(JSON.parse(response));
-};
+const runPyodideCode = async (id: string, payload: APIPayload) => {
+  const { method, value } = payload;
 
-onmessage = async (evt: any) => {
-  if (evt.data.action === PyodideWorkerAction.INIT) {
-    initializePyodide(evt.data.body);
+  const serializer = new AttachedFileSerializer();
+  const payloadJSON = JSON.stringify(value, serializer.serializer);
+
+  try {
+    const response = await apiApp.rpc(method, payloadJSON, serializer.files);
+    self.postMessage({ id, body: JSON.parse(response) });
+  } catch (ex) {
+    self.postMessage({ id, error: ex });
   }
+};
 
-  if (evt.data.action === PyodideWorkerAction.RUN) {
-    const { payload } = evt.data.body;
-    runPyodideCode(payload);
+onmessage = async (evt: MessageEvent<PyodideWorkerDTO>) => {
+  if (evt.data.action === PyodideWorkerAction.INIT) {
+    await initializePyodide(evt.data.id, evt.data.body);
+  } else if (evt.data.action === PyodideWorkerAction.RUN) {
+    await runPyodideCode(evt.data.id, evt.data.body);
   }
 };
 

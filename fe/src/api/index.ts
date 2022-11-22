@@ -8,12 +8,12 @@ export enum APITransport {
 
 export type API = {
   handler: (payload: any, onResponse: Response) => Promise<string>;
-  init: (apiConfig: APIConfig, onResponse: Response) => Promise<LoadStatus>;
+  init: (apiConfig: APIConfig, onResponse: Response) => Promise<any>;
 };
 
 export type APIPayload = {
   method: string;
-  value: string | any;
+  value: any;
 };
 
 export type Response = (response: any) => void;
@@ -26,11 +26,8 @@ export type APIConfig = {
 interface IAPIControl {
   api: any;
   loadStatus: LoadStatus;
-  loadTransport: (
-    apiConfig: APIConfig,
-    onResponse: Response
-  ) => Promise<LoadStatus>;
-  callAPI: (payload: any, onResponse: Response) => Promise<string>;
+  loadTransport: (apiConfig: APIConfig, onResponse: Response) => void;
+  callAPI: (payload: APIPayload) => Promise<any>;
 }
 
 export class APIControl implements IAPIControl {
@@ -47,19 +44,10 @@ export class APIControl implements IAPIControl {
     onResponse: Response
   ): Promise<any> => {
     this.api = await import(`./${apiConfig.transport}`);
-    const apiReady = await this.api.api.init(apiConfig, onResponse);
-    return apiReady;
+    this.api.api.init(apiConfig, onResponse);
   };
 
-  getMethod = () => {
-    return this.api;
-  };
-
-  callAPI = async (
-    payload: APIPayload,
-    onResponse: Response,
-  ): Promise<any> => {
-    const startup = await this.api.api.handler(payload, onResponse);
-    return startup;
+  callAPI = (payload: APIPayload): Promise<any> => {
+    return this.api.api.handler(payload);
   };
 }

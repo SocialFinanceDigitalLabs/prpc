@@ -7,15 +7,13 @@ interface RpcContainerProps {
   options: any;
 }
 
-type DataResponse = {
-  data: LoadStatus | unknown;
-};
-
 function RpcContainer(props: RpcContainerProps) {
   const { transport, options } = props;
   const [loadStatus, setLoadStatus] = useState("Starting");
   const [method, setMethod] = useState("sum");
   const [data, setData] = useState(`{"a": 1, "b": 2}`);
+  const [singleFile, setSingleFile] = useState(null as File | null);
+  const [multiFile, setMultiFile] = useState(null as FileList | null);
   const [result, setResult] = useState("")
   const [api, setApi] = useState(null as APIControl | null)
 
@@ -29,25 +27,34 @@ function RpcContainer(props: RpcContainerProps) {
     if (!api) {
       init();
     }
+    return () => {
+        if (api) {
+            setApi(null);
+        }
+    }
   }, [api, transport, options]);
 
-  const handleClick = () => {
-    api &&
-      api.callAPI(
-        {
-          method,
-          value: JSON.parse(data),
-        },
-        (response) => {
-            console.log("RECEIVED API RESPONSE", response);
-            setResult(JSON.stringify(response.data));
-        }
-      );
+  const handleClick = async () => {
+      if (!api) {
+          return;
+      }
+      const value = JSON.parse(data);
+      if (singleFile) {
+          value['single_file'] = singleFile;
+      }
+      if (multiFile) {
+          value['multi_file'] = multiFile;
+      }
+      try {
+          const response = await api.callAPI({method, value});
+          setResult(JSON.stringify(response));
+      } catch (ex) {
+          setResult(`ERROR: ${ex}`);
+      }
   };
 
-  const handleAPIResponse = (response: DataResponse) => {
-    console.log("RECEIVED API RESPONSE", response);
-    setLoadStatus(response.data as string);
+  const handleAPIResponse = (response: any) => {
+    setLoadStatus(response as string);
   };
 
   const ready = (loadStatus === LoadStatus.READY);
@@ -67,6 +74,16 @@ function RpcContainer(props: RpcContainerProps) {
           <div>
               <label htmlFor="data">Input Data: </label>
               <textarea name="data" rows={10} cols={80} onChange={ev => setData(ev.target.value)} value={data}/>
+          </div>
+          <div>
+              <label htmlFor="singleFile">Upload Single File: </label>
+              <input type="file" name="singleFile" multiple={false}
+                     onChange={e => setSingleFile(e.target.files ? e.target.files[0] : null)} />
+          </div>
+          <div>
+              <label htmlFor="multiFile">Upload Multiple Files: </label>
+              <input type="file" name="multiFile" multiple={true}
+                     onChange={e => setMultiFile(e.target.files)} />
           </div>
           <div>
               <button onClick={handleClick} disabled={!ready}>Click to hit API</button>
