@@ -1,60 +1,57 @@
-import React, { useState, useEffect } from "react";
-import { APIControl, APITransport, APIConfig, LoadStatus } from "@sfdl/prpc";
+import React, {useState, ChangeEvent, useCallback} from "react";
+import {APITransport} from "@sfdl/prpc";
+import PyodideTransportConfig from "./components/transports/PyodideTransportConfig";
+import RpcContainer from "./components/RpcContainer";
+import WebTransportConfig from "./components/transports/WebTransportConfig";
+import JavascriptTransportConfig from "./components/transports/StaticTransportConfig";
 
-interface AppProps {
-  apiTransport: APITransport;
-  apiConfig: APIConfig;
+
+export interface TransportPropsHandler {
+    onChange: (options: any) => void;
+    disabled: boolean;
 }
 
-type DataResponse = {
-  data: LoadStatus | unknown;
-};
+function App() {
+    const [transport, setTransport] = useState(APITransport.PYODIDE);
+    const [config, setConfig] = useState(undefined);
+    const [isRunning, setRunning] = useState(false);
 
-let api: null | APIControl = null;
-
-function App(props: AppProps) {
-  const { apiTransport, apiConfig } = props;
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    const init = async () => {
-      api = new APIControl();
-      await api.loadTransport(apiTransport, handleAPIResponse);
-    };
-
-    if (!api) {
-      init();
+    const selectTransport = (event: ChangeEvent<HTMLSelectElement>) => {
+        setRunning(false);
+        setTransport(event.target.value as APITransport);
+        setConfig(undefined);
     }
-  }, [apiTransport]);
 
-  const handleClick = () => {
-    api &&
-      api.callAPI(
-        {
-          method: "UPLOAD",
-          value: "",
-        },
-        (response) => {
-          console.log(response);
-        },
-        apiConfig
-      );
-  };
+    const updateConfig = useCallback((cfg: any) => {
+        setConfig(cfg)
+    }, [setConfig])
 
-  const handleAPIResponse = (data: DataResponse) => {
-    console.log(data);
-
-    if (data.data === LoadStatus.READY) {
-      setReady(true);
-    }
-  };
-
-  return (
-    <div className="App">
-      App here!
-      <p>{ready && <button onClick={handleClick}>Click to hit API</button>}</p>
-    </div>
-  );
+    console.log(config, transport, isRunning)
+    return (
+        <>
+            <div>
+                <label htmlFor="transport">Choose a transport:</label>
+                <select name="transport" onChange={selectTransport} value={transport}>
+                    {Object.values(APITransport).map(v =>
+                        <option key={v} value={v}>{v}</option>
+                    )}
+                </select>
+            </div>
+            {transport === APITransport.PYODIDE &&
+            <PyodideTransportConfig onChange={updateConfig} disabled={isRunning}/>
+            }
+            {transport === APITransport.WEB &&
+            <WebTransportConfig onChange={updateConfig} disabled={isRunning}/>
+            }
+            {transport === APITransport.STATIC &&
+            <JavascriptTransportConfig onChange={updateConfig} disabled={isRunning}/>
+            }
+            {config && <button onClick={() => {
+                setRunning(true);
+            }} disabled={isRunning}>Launch</button>}
+            {isRunning && config && <RpcContainer transport={transport} options={config}/>}
+        </>
+    );
 }
 
 export default App;

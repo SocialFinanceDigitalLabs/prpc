@@ -7,34 +7,27 @@ export enum APITransport {
 }
 
 export type API = {
-  handler: (
-    payload: any,
-    onResponse: Response,
-    config: APIConfig
-  ) => Promise<string>;
-  init: (onResponse: Response) => Promise<LoadStatus>;
+  handler: (payload: any, onResponse: Response) => Promise<string>;
+  init: (apiConfig: APIConfig, onResponse: Response) => Promise<any>;
 };
 
 export type APIPayload = {
   method: string;
-  value: string | any;
+  value: any;
 };
 
 export type Response = (response: any) => void;
 
 export type APIConfig = {
-  wheelPath: string;
-  endPoint: string;
+  transport: APITransport;
+  options: any;
 };
 
 interface IAPIControl {
   api: any;
   loadStatus: LoadStatus;
-  loadTransport: (
-    apiMethod: APITransport,
-    onResponse: Response
-  ) => Promise<LoadStatus>;
-  callAPI: (payload: any, onResponse: Response, config: any) => Promise<string>;
+  loadTransport: (apiConfig: APIConfig, onResponse: Response) => void;
+  callAPI: (payload: APIPayload) => Promise<any>;
 }
 
 export class APIControl implements IAPIControl {
@@ -47,25 +40,14 @@ export class APIControl implements IAPIControl {
   loadStatus = LoadStatus.IDLE;
 
   loadTransport = async (
-    apiTransport: APITransport,
+    apiConfig: APIConfig,
     onResponse: Response
   ): Promise<any> => {
-    this.api = await import(`./${apiTransport}`);
-    const apiReady = await this.api.api.init(onResponse);
-
-    return apiReady;
+    this.api = await import(`./${apiConfig.transport}`);
+    this.api.api.init(apiConfig, onResponse);
   };
 
-  getMethod = () => {
-    return this.api;
-  };
-
-  callAPI = async (
-    payload: APIPayload,
-    onResponse: Response,
-    config: APIConfig
-  ): Promise<any> => {
-    const startup = await this.api.api.handler(payload, onResponse, config);
-    return startup;
+  callAPI = (payload: APIPayload): Promise<any> => {
+    return this.api.api.handler(payload);
   };
 }
