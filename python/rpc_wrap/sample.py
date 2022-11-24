@@ -45,6 +45,10 @@ def checksum(algorithm: str = "sha256", single_file=None, multi_file=None):
     if not files:
         return "No files provided"
 
+    print("Received the following files:")
+    for f in files:
+        print(f"  {f}")
+
     if algorithm not in hashlib.algorithms_available:
         return f"Algorithm {algorithm} not available"
 

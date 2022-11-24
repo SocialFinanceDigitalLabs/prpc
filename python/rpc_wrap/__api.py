@@ -1,4 +1,5 @@
 import os
+from abc import ABC, abstractmethod
 from functools import partial, wraps
 
 from pkg_resources import EntryPoint, iter_entry_points
@@ -64,3 +65,27 @@ class RpcApp:
             ep = EntryPoint.parse(f"app={name}")
         return ep.resolve()
 
+
+class RemoteFile(ABC):
+
+    @abstractmethod
+    def read(self, *args, **kwargs):
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def content_type(self):
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def filename(self):
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def size(self):
+        raise NotImplementedError
+
+    def __repr__(self):
+        return f"<{type(self).__name__} {self.filename} [{self.content_type}] {self.size} bytes>"
