@@ -18,21 +18,41 @@ if (typeof importScripts === 'function') {
 let pyodideInst: PyodideInterface;
 let apiApp: any;
 
+const ensure_array = (value: any): Array<any> => {
+  if (!value.map) {
+    value = [value];
+  }
+  return value;
+};
+
 const initializePyodide = async (id: string, config: APIConfig) => {
-  self.postMessage({ id, body: LoadStatus.LOADING});
+  self.postMessage({ id, body: LoadStatus.LOADING });
   pyodideInst = await self.loadPyodide();
 
-  self.postMessage({ id, body: LoadStatus.LOADED});
+  self.postMessage({ id, body: LoadStatus.LOADED });
   const options = config.options || {};
-  await pyodideInst.loadPackage('micropip');
-  const micropip = pyodideInst.pyimport('micropip');
-  if (options.packages) {
-    const installs = options.packages.map((pgk: string) =>
-      micropip.install(pgk)
-    );
+
+  // Install native packages
+  if (options.nativePackages) {
+    const installs = ensure_array(options.nativePackages).map((pgk: string) => {
+      console.log('loading native package', pgk);
+      return pyodideInst.loadPackage(pgk);
+    });
     await Promise.all(installs);
   }
 
+  // Install micropip packages
+  await pyodideInst.loadPackage('micropip');
+  const micropip = pyodideInst.pyimport('micropip');
+  if (options.packages) {
+    const installs = ensure_array(options.packages).map((pgk: string) => {
+      console.log('micropip installing', pgk);
+      return micropip.install(pgk);
+    });
+    await Promise.all(installs);
+  }
+
+  // Launch RCP app
   apiApp = pyodideInst
     .pyimport(`rpc_wrap.pyodide`)
     .PyodideSession(options.appName);
@@ -48,7 +68,7 @@ const runPyodideCode = async (id: string, payload: APIPayload) => {
 
   try {
     const response = await apiApp.rpc(method, payloadJSON, serializer.files);
-    self.postMessage({ id, body: JSON.parse(response) });
+    self.postMessage({ id, body: response ? JSON.parse(response) : undefined });
   } catch (ex) {
     self.postMessage({ id, error: ex });
   }
