@@ -72,7 +72,9 @@ export const api: API = {
 
     const message = createMessage(PyodideWorkerAction.INIT, apiConfig, false);
     const responseHandler = new ResponseHandler();
-    responseHandler.handler(onResponse, null);
+    responseHandler.handler(onResponse, (data: any) =>
+      onResponse({ error: data })
+    );
     responseMap[message.id] = responseHandler;
 
     worker.postMessage(message);

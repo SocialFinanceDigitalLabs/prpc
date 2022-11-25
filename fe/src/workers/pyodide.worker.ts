@@ -78,6 +78,7 @@ onmessage = async (evt: MessageEvent<PyodideWorkerDTO>) => {
       await runPyodideCode(evt.data.id, evt.data.body);
     }
   } catch (error) {
+    console.error('Error occurred during pyodide action', error);
     self.postMessage({ id: evt.data.id, error });
   }
 };
