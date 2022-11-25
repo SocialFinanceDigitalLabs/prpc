@@ -66,19 +66,19 @@ const runPyodideCode = async (id: string, payload: APIPayload) => {
   const serializer = new AttachedFileSerializer();
   const payloadJSON = JSON.stringify(value, serializer.serializer);
 
-  try {
-    const response = await apiApp.rpc(method, payloadJSON, serializer.files);
-    self.postMessage({ id, body: response ? JSON.parse(response) : undefined });
-  } catch (ex) {
-    self.postMessage({ id, error: ex });
-  }
+  const response = await apiApp.rpc(method, payloadJSON, serializer.files);
+  self.postMessage({ id, body: response ? JSON.parse(response) : undefined });
 };
 
 onmessage = async (evt: MessageEvent<PyodideWorkerDTO>) => {
-  if (evt.data.action === PyodideWorkerAction.INIT) {
-    await initializePyodide(evt.data.id, evt.data.body);
-  } else if (evt.data.action === PyodideWorkerAction.RUN) {
-    await runPyodideCode(evt.data.id, evt.data.body);
+  try {
+    if (evt.data.action === PyodideWorkerAction.INIT) {
+      await initializePyodide(evt.data.id, evt.data.body);
+    } else if (evt.data.action === PyodideWorkerAction.RUN) {
+      await runPyodideCode(evt.data.id, evt.data.body);
+    }
+  } catch (error) {
+    self.postMessage({ id: evt.data.id, error });
   }
 };
 
