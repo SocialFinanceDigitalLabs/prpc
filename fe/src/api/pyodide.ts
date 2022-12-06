@@ -1,20 +1,17 @@
-import { API, APIConfig, APIPayload, Response } from './';
-import { PyodideWorkerAction } from '../enums/WorkerActions';
 import { v4 as uuidv4 } from 'uuid';
-
-export type PyodideWorkerDTO = {
-  id: string;
-  action: PyodideWorkerAction;
-  body?: any;
-  closes: boolean;
-};
-
-export type PyodideWorkerResponseDTO = {
-  id: string;
-  body?: any;
-  error?: any;
-  closes: boolean;
-};
+import {
+  APIImplementation,
+  APICallback,
+  APIConfig,
+  APIPayload,
+  LoadStatus,
+  ResolverPromise,
+} from '../types';
+import {
+  PyodideWorkerAction,
+  PyodideWorkerDTO,
+  PyodideWorkerResponseDTO,
+} from '../workers/pyodide.types';
 
 let worker: Worker;
 const responseMap: Record<string, ResponseHandler> = {};
@@ -24,26 +21,32 @@ const createMessage = (
   body?: any,
   closes = true
 ): PyodideWorkerDTO => {
-  const message: PyodideWorkerDTO = {
+  return {
     id: uuidv4(),
     action,
     body,
     closes,
-  };
-  return message;
+  } as PyodideWorkerDTO;
 };
 
 class ResponseHandler {
-  resolve: any = null;
-  reject: any = null;
-  handler = (resolve: any, reject: any) => {
+  resolve: APICallback;
+  reject: APICallback;
+
+  constructor(resolve?: APICallback, reject?: APICallback) {
+    this.resolve = (data) =>
+      resolve || console.error('Unhandled resolve', data);
+    this.reject = (data) => reject || console.error('Unhandled reject', data);
+  }
+
+  handler: ResolverPromise = (resolve, reject) => {
     this.resolve = resolve;
     this.reject = reject;
   };
 }
 
-export const api: API = {
-  handler: (payload: APIPayload): Promise<any> => {
+const api: APIImplementation = {
+  handler: (payload: APIPayload): Promise<ResolverPromise> => {
     const message = createMessage(PyodideWorkerAction.RUN, payload);
     const responseHandler = new ResponseHandler();
     const promise = new Promise(responseHandler.handler);
@@ -52,7 +55,7 @@ export const api: API = {
     return promise;
   },
 
-  init: async (apiConfig: APIConfig, onResponse: Response) => {
+  init: async (apiConfig: APIConfig, onResponse: APICallback) => {
     worker = new Worker(
       new URL('../workers/pyodide.worker.ts', import.meta.url)
     );
@@ -64,19 +67,30 @@ export const api: API = {
         resolver.reject(rec.data.error);
       } else {
         resolver.resolve(rec.data.body);
+        if (rec.data.closes) {
+          delete responseMap[rec.data.id];
+        }
       }
-      if (rec.data.closes) {
-        delete responseMap[rec.data.id];
-      }
+
+      // Bridge between handlers and responses
+      const message = createMessage(PyodideWorkerAction.INIT, apiConfig, false);
+      const responseHandler = new ResponseHandler();
+      const promise = new Promise(responseHandler.handler);
+      const realResolve = responseHandler.resolve;
+      responseHandler.resolve = (status: LoadStatus) => {
+        onResponse(status);
+        if (status == LoadStatus.READY) {
+          // Resolve promise on load completion
+          realResolve(status);
+        }
+      };
+      responseMap[message.id] = responseHandler;
+
+      worker.postMessage(message);
+
+      return promise;
     };
-
-    const message = createMessage(PyodideWorkerAction.INIT, apiConfig, false);
-    const responseHandler = new ResponseHandler();
-    responseHandler.handler(onResponse, (data: any) =>
-      onResponse({ error: data })
-    );
-    responseMap[message.id] = responseHandler;
-
-    worker.postMessage(message);
   },
 };
+
+export default api;

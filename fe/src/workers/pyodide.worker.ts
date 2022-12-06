@@ -2,11 +2,13 @@
 // need this because workers need access to the self pseudo-global scope
 
 import { PyodideInterface } from 'pyodide';
-import { PyodideWorkerAction } from '../enums/WorkerActions';
-import { LoadStatus } from '../enums/LoadStatus';
-import { APIConfig, APIPayload } from '../api';
+import { APIConfig, APIPayload, LoadStatus } from '../types';
 import { AttachedFileSerializer } from '../util/dataTransfer';
-import { PyodideWorkerDTO } from '../api/pyodide';
+import {
+  PyodideWorkerAction,
+  PyodideWorkerDTO,
+  PyodideWorkerResponseDTO,
+} from './pyodide.types';
 
 //importScripts is a global. Only run it if it is available (ignore if the module is loaded onto window)
 // @ts-ignore: importScripts on global causes choke in def file
@@ -57,7 +59,7 @@ const initializePyodide = async (id: string, config: APIConfig) => {
     .pyimport(`rpc_wrap.pyodide`)
     .PyodideSession(options.appName);
 
-  self.postMessage({ id, body: LoadStatus.READY });
+  self.postMessage({ id, body: LoadStatus.READY } as PyodideWorkerResponseDTO);
 };
 
 const runPyodideCode = async (id: string, payload: APIPayload) => {
@@ -67,7 +69,10 @@ const runPyodideCode = async (id: string, payload: APIPayload) => {
   const payloadJSON = JSON.stringify(value, serializer.serializer);
 
   const response = await apiApp.rpc(method, payloadJSON, serializer.files);
-  self.postMessage({ id, body: response ? JSON.parse(response) : undefined });
+  self.postMessage({
+    id,
+    body: response ? JSON.parse(response) : undefined,
+  } as PyodideWorkerResponseDTO);
 };
 
 onmessage = async (evt: MessageEvent<PyodideWorkerDTO>) => {
@@ -79,7 +84,7 @@ onmessage = async (evt: MessageEvent<PyodideWorkerDTO>) => {
     }
   } catch (error) {
     console.error('Error occurred during pyodide action', error);
-    self.postMessage({ id: evt.data.id, error });
+    self.postMessage({ id: evt.data.id, error } as PyodideWorkerResponseDTO);
   }
 };
 

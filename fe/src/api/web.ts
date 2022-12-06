@@ -1,30 +1,38 @@
-import { API, APIConfig, APIPayload, Response } from './';
-import { LoadStatus } from '../enums/LoadStatus';
 import { AttachedFileSerializer } from '../util/dataTransfer';
+import {
+  APIImplementation,
+  APICallback,
+  APIConfig,
+  LoadStatus,
+  ResolverPromise,
+} from '../types';
 
-let config: APIConfig;
+class WebApi implements APIImplementation {
+  config: APIConfig | null = null;
 
-export const api: API = {
-  init: async (apiConfig, onResponse) => {
-    config = apiConfig;
-    // TODO: We should check the API here - do we always support a 'ping' service?
+  async init(apiConfig: APIConfig, onResponse: APICallback): Promise<void> {
+    this.config = apiConfig;
     onResponse(LoadStatus.READY);
-  },
-  handler: async (payload: APIPayload): Promise<any> => {
+  }
+
+  async handler(payload: any): Promise<ResolverPromise> {
+    if (!this.config) {
+      throw 'API not configured yet. Must call `init` before using API';
+    }
     const { method, value } = payload;
 
     const serializer = new AttachedFileSerializer();
     const jsonValue = JSON.stringify(value, serializer.serializer);
 
     const formData = new FormData();
-    if (config.options.appName) {
-      formData.append('RPC-App', config.options.appName);
+    if (this.config.options.appName) {
+      formData.append('RPC-App', this.config.options.appName);
     }
     formData.append('method', method);
     formData.append('value', jsonValue);
     serializer.formDataAppend(formData);
 
-    const response = await fetch(config.options.url, {
+    const response = await fetch(this.config.options.url, {
       method: 'POST',
       body: formData,
     });
@@ -33,5 +41,9 @@ export const api: API = {
     } else {
       throw `Server responded with error: ${response.status}`;
     }
-  },
-};
+  }
+}
+
+const api = new WebApi();
+
+export default api;

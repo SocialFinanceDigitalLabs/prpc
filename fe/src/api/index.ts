@@ -1,53 +1,27 @@
-import { LoadStatus } from '../enums/LoadStatus';
+import {
+  APICallback,
+  APIConfig,
+  APIImplementation,
+  APIPayload,
+  IAPI,
+} from '../types';
 
-export enum APITransport {
-  PYODIDE = 'pyodide',
-  WEB = 'web',
-  STATIC = 'static',
-}
+export class API implements IAPI {
+  api: APIImplementation;
 
-export type API = {
-  handler: (payload: any, onResponse: Response) => Promise<string>;
-  init: (apiConfig: APIConfig, onResponse: Response) => Promise<any>;
-};
-
-export type APIPayload = {
-  method: string;
-  value: any;
-};
-
-export type Response = (response: any) => void;
-
-export type APIConfig = {
-  transport: APITransport;
-  options: any;
-};
-
-interface IAPIControl {
-  api: any;
-  loadStatus: LoadStatus;
-  loadTransport: (apiConfig: APIConfig, onResponse: Response) => void;
-  callAPI: (payload: APIPayload) => Promise<any>;
-}
-
-export class APIControl implements IAPIControl {
-  api: any = null;
-
-  constructor() {
-    this.api = null;
+  constructor(api: APIImplementation) {
+    this.api = api;
   }
 
-  loadStatus = LoadStatus.IDLE;
-
-  loadTransport = async (
-    apiConfig: APIConfig,
-    onResponse: Response
-  ): Promise<any> => {
-    this.api = await import(`./${apiConfig.transport}`);
-    this.api.api.init(apiConfig, onResponse);
-  };
-
-  callAPI = (payload: APIPayload): Promise<any> => {
-    return this.api.api.handler(payload);
-  };
+  call = async (payload: APIPayload): Promise<unknown> =>
+    await this.api.handler(payload);
 }
+
+export const createApi = async (
+  apiConfig: APIConfig,
+  callback: APICallback
+): Promise<API> => {
+  const implementation: APIImplementation = await import(`./${apiConfig.transport}`);
+  await implementation.init(apiConfig, callback);
+  return new API(implementation);
+};

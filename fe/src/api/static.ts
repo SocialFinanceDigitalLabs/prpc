@@ -1,9 +1,8 @@
-import { API, APIPayload, Response } from './';
-import { LoadStatus } from '../enums/LoadStatus';
+import { APIImplementation, APIPayload, LoadStatus } from '../types';
 
 let api_impl: { handler: (payload: APIPayload) => Promise<any> };
 
-export const api: API = {
+const api: APIImplementation = {
   handler: (payload: APIPayload): Promise<any> => {
     return api_impl.handler(payload);
   },
@@ -12,3 +11,5 @@ export const api: API = {
     onResponse(LoadStatus.READY);
   },
 };
+
+export default api;

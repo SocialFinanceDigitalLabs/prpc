@@ -1,5 +1,22 @@
-import { APITransport, APIConfig, APIControl, APIPayload, API } from './api/';
-import { LoadStatus } from './enums/LoadStatus';
+import {
+  APICallback,
+  APIConfig,
+  APIPayload,
+  APITransport,
+  IAPI,
+  LoadStatus,
+} from './types';
+import { API, createApi } from './api';
 import sample from './sample';
 
-export { API, APIConfig, APIControl, APIPayload, APITransport, LoadStatus, sample };
+export {
+  API,
+  APICallback,
+  APIConfig,
+  APIPayload,
+  APITransport,
+  IAPI,
+  LoadStatus,
+  createApi,
+  sample,
+};
