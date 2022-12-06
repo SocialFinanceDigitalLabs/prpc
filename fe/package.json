@@ -18,7 +18,8 @@
     "package": "npm run build && npm pack",
     "test": "jest --no-cache --runInBand",
     "test:cov": "jest --coverage --no-cache --runInBand",
-    "addscope": "node tools/packagejson name @sfdl/prpc"
+    "addscope": "node tools/packagejson name @sfdl/prpc",
+    "dev": "nodemon -e ts,js,tsx,json,jsx --watch src --exec npm run build"
   },
   "publishConfig": {
     "access": "public"

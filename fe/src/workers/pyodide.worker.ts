@@ -2,7 +2,7 @@
 // need this because workers need access to the self pseudo-global scope
 
 import { PyodideInterface } from 'pyodide';
-import { APIConfig, APIPayload, LoadStatus } from '../types';
+import { APIConfig, LoadStatus } from '../types';
 import { AttachedFileSerializer } from '../util/dataTransfer';
 import {
   PyodideWorkerAction,
@@ -62,9 +62,7 @@ const initializePyodide = async (id: string, config: APIConfig) => {
   self.postMessage({ id, body: LoadStatus.READY } as PyodideWorkerResponseDTO);
 };
 
-const runPyodideCode = async (id: string, payload: APIPayload) => {
-  const { method, value } = payload;
-
+const runPyodideCode = async (id: string, method: string, value: any) => {
   const serializer = new AttachedFileSerializer();
   const payloadJSON = JSON.stringify(value, serializer.serializer);
 
@@ -80,7 +78,11 @@ onmessage = async (evt: MessageEvent<PyodideWorkerDTO>) => {
     if (evt.data.action === PyodideWorkerAction.INIT) {
       await initializePyodide(evt.data.id, evt.data.body);
     } else if (evt.data.action === PyodideWorkerAction.RUN) {
-      await runPyodideCode(evt.data.id, evt.data.body);
+      await runPyodideCode(
+        evt.data.id,
+        evt.data.body.method,
+        evt.data.body.value
+      );
     }
   } catch (error) {
     console.error('Error occurred during pyodide action', error);

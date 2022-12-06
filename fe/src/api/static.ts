@@ -1,10 +1,10 @@
-import { APIImplementation, APIPayload, LoadStatus } from '../types';
+import { APIImplementation, LoadStatus } from '../types';
 
-let api_impl: { handler: (payload: APIPayload) => Promise<any> };
+let api_impl: { handler: (method: string, value: any) => Promise<any> };
 
 const api: APIImplementation = {
-  handler: (payload: APIPayload): Promise<any> => {
-    return api_impl.handler(payload);
+  handler: (method: string, value: any): Promise<any> => {
+    return api_impl.handler(method, value);
   },
   init: async (apiConfig, onResponse) => {
     api_impl = apiConfig.options.jsModule;

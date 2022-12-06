@@ -3,7 +3,6 @@ import {
   APIImplementation,
   APICallback,
   APIConfig,
-  APIPayload,
   LoadStatus,
   ResolverPromise,
 } from '../types';
@@ -46,8 +45,8 @@ class ResponseHandler {
 }
 
 const api: APIImplementation = {
-  handler: (payload: APIPayload): Promise<ResolverPromise> => {
-    const message = createMessage(PyodideWorkerAction.RUN, payload);
+  handler: (method: string, value: any): Promise<ResolverPromise> => {
+    const message = createMessage(PyodideWorkerAction.RUN, { method, value });
     const responseHandler = new ResponseHandler();
     const promise = new Promise(responseHandler.handler);
     responseMap[message.id] = responseHandler;
@@ -71,25 +70,25 @@ const api: APIImplementation = {
           delete responseMap[rec.data.id];
         }
       }
-
-      // Bridge between handlers and responses
-      const message = createMessage(PyodideWorkerAction.INIT, apiConfig, false);
-      const responseHandler = new ResponseHandler();
-      const promise = new Promise(responseHandler.handler);
-      const realResolve = responseHandler.resolve;
-      responseHandler.resolve = (status: LoadStatus) => {
-        onResponse(status);
-        if (status == LoadStatus.READY) {
-          // Resolve promise on load completion
-          realResolve(status);
-        }
-      };
-      responseMap[message.id] = responseHandler;
-
-      worker.postMessage(message);
-
-      return promise;
     };
+
+    // Bridge between handlers and responses
+    const message = createMessage(PyodideWorkerAction.INIT, apiConfig, false);
+    const responseHandler = new ResponseHandler();
+    const promise = new Promise(responseHandler.handler);
+    const realResolve = responseHandler.resolve;
+    responseHandler.resolve = (status: LoadStatus) => {
+      onResponse(status);
+      if (status == LoadStatus.READY) {
+        // Resolve promise on load completion
+        realResolve(status);
+      }
+    };
+    responseMap[message.id] = responseHandler;
+
+    worker.postMessage(message);
+
+    return promise;
   },
 };
 

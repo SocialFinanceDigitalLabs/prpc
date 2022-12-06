@@ -1,7 +1,6 @@
 import {
   APICallback,
   APIConfig,
-  APIPayload,
   APITransport,
   IAPI,
   LoadStatus,
@@ -13,7 +12,6 @@ export {
   API,
   APICallback,
   APIConfig,
-  APIPayload,
   APITransport,
   IAPI,
   LoadStatus,

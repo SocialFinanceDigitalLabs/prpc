@@ -15,12 +15,10 @@ class WebApi implements APIImplementation {
     onResponse(LoadStatus.READY);
   }
 
-  async handler(payload: any): Promise<ResolverPromise> {
+  async handler(method: string, value: any): Promise<ResolverPromise> {
     if (!this.config) {
       throw 'API not configured yet. Must call `init` before using API';
     }
-    const { method, value } = payload;
-
     const serializer = new AttachedFileSerializer();
     const jsonValue = JSON.stringify(value, serializer.serializer);
 

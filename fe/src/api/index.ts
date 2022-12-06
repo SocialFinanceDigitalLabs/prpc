@@ -2,7 +2,6 @@ import {
   APICallback,
   APIConfig,
   APIImplementation,
-  APIPayload,
   IAPI,
 } from '../types';
 
@@ -13,15 +12,16 @@ export class API implements IAPI {
     this.api = api;
   }
 
-  call = async (payload: APIPayload): Promise<unknown> =>
-    await this.api.handler(payload);
+  call = async (method: string, value: unknown): Promise<unknown> =>
+    await this.api.handler(method, value);
 }
 
 export const createApi = async (
   apiConfig: APIConfig,
   callback: APICallback
 ): Promise<API> => {
-  const implementation: APIImplementation = await import(`./${apiConfig.transport}`);
-  await implementation.init(apiConfig, callback);
-  return new API(implementation);
+  const implementation = await import(`./${apiConfig.transport}`);
+  const api: APIImplementation = implementation.default;
+  await api.init(apiConfig, callback);
+  return new API(api);
 };

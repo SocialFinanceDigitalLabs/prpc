@@ -1,15 +1,10 @@
 export interface IAPI {
-  call: (payload: any) => Promise<any>;
+  call: (method: string, value: any) => Promise<any>;
 }
 
 export type APIImplementation = {
-  handler: (payload: any) => Promise<ResolverPromise>;
+  handler: (method: string, value: any) => Promise<ResolverPromise>;
   init: (apiConfig: APIConfig, onResponse: APICallback) => Promise<void>;
-};
-
-export type APIPayload = {
-  method: string;
-  value: any;
 };
 
 export type APIConfig = {
