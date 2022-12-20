@@ -2,7 +2,7 @@ import os
 import hashlib
 from typing import Iterable
 
-from rpc_wrap import RpcApp
+from prpc_python import RpcApp
 
 app = RpcApp("Sample App")
 

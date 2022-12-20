@@ -1,8 +1,8 @@
 import json
 from io import BytesIO
 from typing import Optional
-from rpc_wrap import RpcApp
-from rpc_wrap.__api import RemoteFile
+from prpc_python import RpcApp
+from prpc_python.__api import RemoteFile
 
 
 class PyodideFile(RemoteFile):

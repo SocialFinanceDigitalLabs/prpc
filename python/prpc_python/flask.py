@@ -2,11 +2,11 @@ import json
 
 from werkzeug.datastructures import FileStorage
 
-from rpc_wrap import RpcApp
+from prpc_python import RpcApp
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-from rpc_wrap.__api import RemoteFile
+from prpc_python.__api import RemoteFile
 
 flaskapp = Flask(__name__)
 CORS(flaskapp)

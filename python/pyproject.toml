@@ -1,12 +1,16 @@
 [tool.poetry]
-name = "rpc-wrap"
-version = "0.3.0"
-description = ""
-authors = ["Kaj Siebert <kaj@k-si.com>"]
+name = "prpc_python"
+version = "0.9.0"
+description = "A very simple RPC-like library to make writing Pyodide applications easier. At the core of the library is a simple App + Decorator based approach inspired by Flask."
+license = "MIT"
+authors = ["Kaj Siebert <kaj@k-si.com>", "Dave Tickle <dave@dotloadmovie.com>", ]
 readme = "README.md"
 packages = [
-    { include = "rpc_wrap" },
+    { include = "prpc_python" },
 ]
+repository = "https://github.com/SocialFinanceDigitalLabs/prpc"
+keywords = ["rpc", "pyodide"]
+
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4.0"
@@ -20,12 +24,13 @@ setuptools = "^62.0.0"
 [tool.poetry.extras]
 cli = ["click", "click-log", "rich"]
 flask = ["flask", "flask-cors"]
+simple = ["flask", "flask-cors", "click", "click-log", "rich"]
 
 [tool.poetry.scripts]
-rpc-wrap = "rpc_wrap.cli:main"
+prpc = { callable = "prpc_python.cli:prpc", extras=["cli"] }
 
-[tool.poetry.plugins."rpc_wrap"]
-sample = "rpc_wrap.sample:app"
+[tool.poetry.plugins."prpc_python"]
+sample = "prpc_python.sample:app"
 
 [build-system]
 requires = ["poetry-core"]
