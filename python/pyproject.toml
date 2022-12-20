@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "prpc_python"
-version = "0.9.1"
+version = "0.9.2"
 description = "A very simple RPC-like library to make writing Pyodide applications easier. At the core of the library is a simple App + Decorator based approach inspired by Flask."
 license = "MIT"
 authors = ["Kaj Siebert <kaj@k-si.com>", "Dave Tickle <dave@dotloadmovie.com>", ]

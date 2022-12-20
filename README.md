@@ -67,6 +67,11 @@ and test it using curl:
 curl -X POST http://localhost:8000 -d 'method=sum&value={"a": 1, "b": 2}'   
 ```
 
+or use the built-in test page which can be launched by clicking the URL
+printed by the `prpc flask` command, e.g. http://127.0.0.1:8000
+
+
+
 ## Want to know more?
 
 Check out the [javascript](./javascript/README.md) or [python](./python/README.md)

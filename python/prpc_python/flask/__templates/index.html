@@ -1,0 +1,105 @@
+<html>
+<head>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/json.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+</head>
+<body>
+
+<nav>
+    <div class="nav-wrapper deep-purple darken-1">
+        <span class="brand-logo center">PRPC Explorer ~ {{ app.name }}</span>
+        <ul id="nav-mobile" class="right hide-on-med-and-down">
+            <li><a href="https://github.com/SocialFinanceDigitalLabs/prpc">Documentation</a></li>
+        </ul>
+    </div>
+</nav>
+
+<main class="container">
+
+    <div class="row">
+        <div class="col s12">
+            <p class="flow-text">
+                Pick a command below, optionally provide a JSON formatted payload in the box provided
+                and hit call to test your PRPC app.
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <form id="commandform" method="post" class="col s12" >
+
+            <div class="row">
+
+                <div class="input-field col s6">
+                    <select name="method">
+                        <option value="" disabled selected>Choose the command</option>
+                        {% for command in app.commands %}
+                        <option value="{{command}}">{{command}}</option>
+                        {% endfor %}
+                    </select>
+                    <label>Command</label>
+                </div>
+
+                <div class="col s6 right-align">
+                    <button type="submit" class="btn waves-effect waves-light">Call</button>
+
+
+                </div>
+
+            </div>
+            <div class="row">
+                <div class="input-field col s12">
+                    <textarea id="textarea1" name="value" class="materialize-textarea"></textarea>
+                    <label for="textarea1">Payload</label>
+                </div>
+            </div>
+
+
+        </form>
+    </div>
+
+    <div class="row">
+        <div class="col s12">
+            <pre id="command-output" class="json">
+
+            </pre>
+        </div>
+
+
+    </div>
+
+</main>
+
+
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script>
+  M.AutoInit();
+  document.forms['commandform'].addEventListener('submit', (event) => {
+    event.preventDefault();
+    fetch(event.target.action, {
+        method: 'POST',
+        body: new URLSearchParams(new FormData(event.target))
+    }).then((response) => {
+        if (!response.ok) {
+          return response.text().then((text) => {
+             throw new Error(text);
+          })
+        }
+        return response.json();
+    }).then((body) => {
+      el = document.getElementById("command-output");
+      el.textContent = JSON.stringify(body, null, 2);
+      hljs.highlightElement(el);
+    }).catch((error) => {
+      el = document.getElementById("command-output");
+      el.textContent = error;
+    });
+});
+</script>
+</body>
+</html>

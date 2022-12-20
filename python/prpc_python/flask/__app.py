@@ -1,36 +1,17 @@
 import json
+from pathlib import Path
 
-from werkzeug.datastructures import FileStorage
+import werkzeug.exceptions
 
 from prpc_python import RpcApp
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 
-from prpc_python.__api import RemoteFile
+from .__api import FlaskFile
 
-flaskapp = Flask(__name__)
+template_dir = Path(__file__).parent / "__templates"
+flaskapp = Flask(__name__, template_folder=template_dir.as_posix())
 CORS(flaskapp)
-
-
-class FlaskFile(RemoteFile):
-
-    def __init__(self, file_storage: FileStorage):
-        self.__file = file_storage
-
-    def read(self, *args, **kwargs):
-        return self.__file.stream.read(*args, **kwargs)
-
-    @property
-    def content_type(self):
-        return self.__file.content_type
-
-    @property
-    def filename(self):
-        return self.__file.filename
-
-    @property
-    def size(self):
-        return self.__file.content_length
 
 
 @flaskapp.route('/', methods=['POST'])
@@ -52,6 +33,22 @@ def rpc():
         data = None
 
     result = app.run(request.form['method'], data)
-
     response = jsonify(result)
+
     return response
+
+
+@flaskapp.route('/', methods=['GET'])
+def index():
+    app = RpcApp.first()
+    return render_template('index.html', app=app)
+
+
+@flaskapp.errorhandler(werkzeug.exceptions.BadRequest)
+def handle_bad_request(e):
+    return e.description, 400
+
+
+@flaskapp.errorhandler(Exception)
+def handle_internal_server_error(e):
+    return str(e), 500
