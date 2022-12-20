@@ -11,7 +11,7 @@ def _resolve_entry_points():
             yield RpcApp.find(app_name.strip())
 
     for ep in iter_entry_points("prpc_python"):
-        yield ep
+        yield ep.resolve()
 
 
 class RpcApp:

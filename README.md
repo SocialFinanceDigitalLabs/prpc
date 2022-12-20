@@ -1,9 +1,9 @@
 # prpc - pyodide remote procedure calls
 
-A very simple [RPC-like](rpc) library to make writing [Pyodide](pyodide) applications easier.
+A very simple [RPC-like][rpc] library to make writing [Pyodide][pyodide] applications easier.
 
 At the core of the library is a simple App + Decorator based approach inspired by 
-[Flask](flask). In fact, Flask is one of the possible ways of interacting with your 
+[Flask][flask]. In fact, Flask is one of the possible ways of interacting with your 
 application.
 
 The principle here is that when writing a javascript-based front-end talking to a "server" running
@@ -22,8 +22,8 @@ On the Python side it is the same:
 
 ```python
 from prpc_python import RpcApp
-app = RpcApp("Sample App")
 
+app = RpcApp("Sample App")
 
 @app.call(name='sum')
 def sum_two(a: int, b: int) -> int:
@@ -58,14 +58,21 @@ prpc commands -s
 You can launch the Flask server with:
 
 ```bash
-prpc flask
+prpc flask -s
 ```
 
 and test it using curl:
 
 ```bash 
-curl -X POST http://localhost:8000 -d 'RPC-App=prpc_python.sample:app&method=sum&value={"a": 1, "b": 2}'   
+curl -X POST http://localhost:8000 -d 'method=sum&value={"a": 1, "b": 2}'   
 ```
+
+## Want to know more?
+
+Check out the [javascript](./javascript/README.md) or [python](./python/README.md)
+for more information.
+
+
 [flask]: https://flask.palletsprojects.com/
 [pyodide]: https://pyodide.org/en/stable/
 [rpc]: https://en.wikipedia.org/wiki/Remote_procedure_call

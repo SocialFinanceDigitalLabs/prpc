@@ -1,5 +1,7 @@
 import errno
 import json
+import os
+from functools import wraps
 
 import click
 import logging
@@ -17,13 +19,34 @@ def _get_app(sample, app):
         exit(errno.EINVAL)
 
     if sample:
-        app = RpcApp.SAMPLE_APP
+        os.environ["PRPC_APP"] = app = RpcApp.SAMPLE_APP
 
     if app:
         app = RpcApp.find(app)
     else:
         app = RpcApp.first()
     return app
+
+
+def click_app_option(func):
+    @click.option(
+        "--app",
+        "-a",
+        help="The name of the app to run",
+    )
+    @click.option(
+        "--sample",
+        "-s",
+        is_flag=True,
+        help="Run the sample app",
+    )
+    @click.pass_context
+    @wraps(func)
+    def wrapper(ctx, app, sample, *args, **kwargs):
+        app = _get_app(sample, app)
+        return ctx.invoke(func, *args, app=app, **kwargs)
+
+    return wrapper
 
 
 @click.group()
@@ -33,23 +56,20 @@ def prpc():
 
 @prpc.command()
 @click.argument("command")
-@click.argument("payload", type=str)
-@click.option('--sample', "-s", is_flag=True, help="Install sample app")
-@click.option('--app', "-a", type=str, help="Run app with given name")
+@click.argument("payload", type=str, required=False)
+@click_app_option
 @click_log.simple_verbosity_option(logger)
-def run(command, payload, sample, app):
-    app = _get_app(sample, app)
-    result = app.run(command, json.loads(payload))
+def run(command, payload, app):
+    if payload:
+        payload = json.loads(payload)
+    result = app.run(command, payload)
     print_json(json.dumps(result))
 
 
 @prpc.command()
-@click.option('--sample', "-s", is_flag=True, help="Install sample app")
-@click.option('--app', "-a", type=str, help="Run app with given name")
+@click_app_option
 @click_log.simple_verbosity_option(logger)
-def commands(sample, app):
-    app = _get_app(sample, app)
-
+def commands(app):
     click.echo(f"{app.name} commands:")
     for command in app.commands:
         click.echo(f" * {command}")
@@ -57,8 +77,9 @@ def commands(sample, app):
 
 @prpc.command()
 @click.option('--port', "-p", type=int, help="Which port to run on", default=8000)
+@click_app_option
 @click_log.simple_verbosity_option(logger)
-def flask(port):
+def flask(port, app):
     from .flask import flaskapp
     flaskapp.run(debug=True, port=port)
 

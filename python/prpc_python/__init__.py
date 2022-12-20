@@ -1,3 +1,3 @@
-from prpc_python.__api import RpcApp
+from prpc_python.__api import RpcApp, RemoteFile
 
-__all__ = ['RpcApp']
+__all__ = ['RpcApp', 'RemoteFile']
