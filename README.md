@@ -36,7 +36,7 @@ To launch a python application, you need to install the `prpc-python` package:
 
 ```bash
 
-pip install prpc-python['simple']
+pip install "prpc-python[simple]"
 
 ```
 
