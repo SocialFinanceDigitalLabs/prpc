@@ -1,6 +1,7 @@
 import errno
 import json
 import os
+import sys
 from functools import wraps
 
 import click
@@ -13,6 +14,15 @@ logger = logging.getLogger(__name__)
 click_log.basic_config(logger)
 
 
+def _find_app(name):
+    try:
+        return RpcApp.find(name)
+    except ModuleNotFoundError:
+        # Try to see if app is in the current working directory
+        sys.path.append(os.getcwd())
+        return RpcApp.find(name)
+
+
 def _get_app(sample, app):
     if app and sample:
         click.secho("ERROR: Cannot specify both app and sample", err=True, fg="red")
@@ -22,7 +32,7 @@ def _get_app(sample, app):
         os.environ["PRPC_APP"] = app = RpcApp.SAMPLE_APP
 
     if app:
-        app = RpcApp.find(app)
+        app = _find_app(app)
     else:
         app = RpcApp.first()
     return app

@@ -17,11 +17,11 @@ Create a file called `myapp.py` and add the following code:
 # myapp.py
 from prpc_python import RpcApp
 
-app = RpcApp("Sample App")
+app = RpcApp("My Hello World App")
 
 
 @app.call
-def hello() :
+def hello():
     return "World"
 ```
 
