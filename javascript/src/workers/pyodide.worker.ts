@@ -55,11 +55,13 @@ const initializePyodide = async (id: string, config: APIConfig) => {
   }
 
   // Launch RCP app
+  console.log('Launching PRPC app with options', options);
   try {
     apiApp = pyodideInst
       .pyimport(`prpc_python.pyodide`)
       .PyodideSession(options.appName);
   } catch {
+    console.log('Failed to load current PRPC version. Trying legacy.');
     apiApp = pyodideInst
       .pyimport(`rpc_wrap.pyodide`)
       .PyodideSession(options.appName);
