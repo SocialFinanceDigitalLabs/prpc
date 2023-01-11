@@ -55,9 +55,15 @@ const initializePyodide = async (id: string, config: APIConfig) => {
   }
 
   // Launch RCP app
-  apiApp = pyodideInst
-    .pyimport(`rpc_wrap.pyodide`)
-    .PyodideSession(options.appName);
+  try {
+    apiApp = pyodideInst
+      .pyimport(`prpc_python.pyodide`)
+      .PyodideSession(options.appName);
+  } catch {
+    apiApp = pyodideInst
+      .pyimport(`rpc_wrap.pyodide`)
+      .PyodideSession(options.appName);
+  }
 
   self.postMessage({ id, body: LoadStatus.READY } as PyodideWorkerResponseDTO);
 };
