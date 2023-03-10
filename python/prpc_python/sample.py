@@ -1,4 +1,5 @@
 import os
+import io
 import hashlib
 from typing import Iterable
 
@@ -6,6 +7,18 @@ from prpc_python import RpcApp
 
 app = RpcApp("Sample App")
 
+@app.call
+def download_file():
+    open('/sample.txt', 'x')
+    f = open('/sample.txt', 'a')
+    f.write('hello, world')
+    f.close()
+
+    with open('/sample.txt', 'rt') as fh:
+        txt = fh.read()
+    txt
+
+    return txt
 
 @app.call(name='sum')
 def sum_two(a: int, b: int) -> int:

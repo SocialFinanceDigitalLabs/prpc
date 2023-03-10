@@ -1,5 +1,5 @@
 import json
-from io import BytesIO
+from io import BytesIO, StringIO, TextIOWrapper
 from typing import Optional
 from prpc_python import RpcApp
 from prpc_python.__api import RemoteFile
@@ -57,5 +57,9 @@ class PyodideSession:
         result = self.app.run(method, value)
         if result is None:
             return None
+        elif isinstance(result, TextIOWrapper):
+            print('is text io')
+            print(result)
+            return result  
         else:
             return json.dumps(result)

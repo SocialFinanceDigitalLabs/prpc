@@ -75,9 +75,19 @@ const runPyodideCode = async (id: string, method: string, value: any) => {
   const payloadJSON = JSON.stringify(value, serializer.serializer);
 
   const response = await apiApp.rpc(method, payloadJSON, serializer.files);
+  let body: any = undefined;
+
+  if (method === 'download_file') {
+    body = new Blob([response], { type: 'application/text' });
+  } else {
+    body = response ? JSON.parse(response) : undefined;
+  }
+
+  console.log(body);
+
   self.postMessage({
     id,
-    body: response ? JSON.parse(response) : undefined,
+    body,
   } as PyodideWorkerResponseDTO);
 };
 
