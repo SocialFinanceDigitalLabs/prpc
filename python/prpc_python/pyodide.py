@@ -1,11 +1,11 @@
-import asyncio
 import json
 from io import BytesIO
 from typing import Optional
-from rpc_wrap import RpcApp
+from prpc_python import RpcApp
+from prpc_python.__api import RemoteFile
 
 
-class FileWrapper:
+class PyodideFile(RemoteFile):
 
     def __init__(self, js_file, data):
         self.js_file = js_file
@@ -13,6 +13,10 @@ class FileWrapper:
 
     def read(self, *args, **kwargs):
         return BytesIO(self.__data).read(*args, **kwargs)
+
+    @property
+    def content_type(self):
+        return self.js_file.type
 
     @property
     def filename(self):
@@ -23,10 +27,10 @@ class FileWrapper:
         return self.js_file.size
 
 
-async def create_file_wrapper(file: "pyodide.JsProxy") -> FileWrapper:
+async def create_file_wrapper(file: "pyodide.JsProxy") -> PyodideFile:
     data = await file.arrayBuffer()
     data = data.to_py()
-    return FileWrapper(file, data)
+    return PyodideFile(file, data)
 
 
 class PyodideSession:

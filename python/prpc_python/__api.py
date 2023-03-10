@@ -1,20 +1,21 @@
 import os
+from abc import ABC, abstractmethod
 from functools import partial, wraps
 
 from pkg_resources import EntryPoint, iter_entry_points
 
 
 def _resolve_entry_points():
-    if env := os.getenv("RPC_APP"):
+    if env := os.getenv("PRPC_APP"):
         for app_name in env.split(","):
             yield RpcApp.find(app_name.strip())
 
-    for ep in iter_entry_points("rpc_app"):
-        yield ep
+    for ep in iter_entry_points("prpc_python"):
+        yield ep.resolve()
 
 
 class RpcApp:
-    SAMPLE_APP = "sample=rpc_wrap.sample:app"
+    SAMPLE_APP = "sample=prpc_python.sample:app"
 
     def __init__(self, name="RpcApp"):
         self.__name = name
@@ -46,6 +47,10 @@ class RpcApp:
         else:
             return self.__calls[command](payload)
 
+    @property
+    def commands(self):
+        return self.__calls.keys()
+
     def __repr__(self):
         return f"<RpcApp {self.__name}>"
 
@@ -64,3 +69,27 @@ class RpcApp:
             ep = EntryPoint.parse(f"app={name}")
         return ep.resolve()
 
+
+class RemoteFile(ABC):
+
+    @abstractmethod
+    def read(self, *args, **kwargs):
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def content_type(self):
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def filename(self):
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def size(self):
+        raise NotImplementedError
+
+    def __repr__(self):
+        return f"<{type(self).__name__} {self.filename} [{self.content_type}] {self.size} bytes>"
