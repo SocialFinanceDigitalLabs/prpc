@@ -2,6 +2,7 @@ import os
 import io
 import hashlib
 from typing import Iterable
+from PIL import Image, ImageDraw
 
 from prpc_python import RpcApp
 
@@ -19,6 +20,21 @@ def download_file():
     txt
 
     return txt
+
+
+@app.call
+def download_img():
+    img = Image.new('RGBA', (100, 100), (255, 0, 0, 1))
+
+    draw = ImageDraw.Draw(img)
+    draw.ellipse((25, 25, 75, 75), fill=(255, 0, 0))
+
+    img.save('/test.png', 'PNG')
+
+    f = open("/test.png", 'rb')
+    file_content = f.read()
+    f.close()
+    return file_content
 
 @app.call(name='sum')
 def sum_two(a: int, b: int) -> int:

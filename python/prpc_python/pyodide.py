@@ -41,7 +41,7 @@ class PyodideSession:
         else:
             self.app = RpcApp.first()
 
-    async def rpc(self, method: str, value: Optional[str], files=None):
+    async def rpc(self, method: str, value: Optional[str], files=None, outputRaw: bool = False):
         if files:
             files = files.to_py()
             files = {k: await create_file_wrapper(v) for k, v in files.items()}
@@ -57,9 +57,9 @@ class PyodideSession:
         result = self.app.run(method, value)
         if result is None:
             return None
-        elif isinstance(result, TextIOWrapper):
-            print('is text io')
-            print(result)
-            return result  
         else:
-            return json.dumps(result)
+            try:
+                json_val = json.dump(result)
+                return json_val
+            except:
+                return result

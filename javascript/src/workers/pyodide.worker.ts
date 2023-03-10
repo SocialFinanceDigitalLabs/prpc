@@ -77,13 +77,14 @@ const runPyodideCode = async (id: string, method: string, value: any) => {
   const response = await apiApp.rpc(method, payloadJSON, serializer.files);
   let body: any = undefined;
 
-  if (method === 'download_file') {
-    body = new Blob([response], { type: 'application/text' });
-  } else {
-    body = response ? JSON.parse(response) : undefined;
+  if (response) {
+    console.log(response);
+    try {
+      body = JSON.parse(response);
+    } catch (e) {
+      body = new Blob([response], { type: 'application/octet-stream' });
+    }
   }
-
-  console.log(body);
 
   self.postMessage({
     id,
