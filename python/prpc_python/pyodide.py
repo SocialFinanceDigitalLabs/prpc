@@ -1,5 +1,5 @@
 import json
-from io import BytesIO
+from io import BytesIO, StringIO, TextIOWrapper
 from typing import Optional
 from prpc_python import RpcApp
 from prpc_python.__api import RemoteFile
@@ -41,7 +41,7 @@ class PyodideSession:
         else:
             self.app = RpcApp.first()
 
-    async def rpc(self, method: str, value: Optional[str], files=None):
+    async def rpc(self, method: str, value: Optional[str], files=None, outputRaw: bool = False):
         if files:
             files = files.to_py()
             files = {k: await create_file_wrapper(v) for k, v in files.items()}
@@ -58,4 +58,8 @@ class PyodideSession:
         if result is None:
             return None
         else:
-            return json.dumps(result)
+            try:
+                json_val = json.dump(result)
+                return json_val
+            except:
+                return result
